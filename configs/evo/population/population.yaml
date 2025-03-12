@@ -1,0 +1,4 @@
+_target_: learned_qd.evo.populations.population.Population.init
+_partial_: true
+
+max_size: 128

@@ -1,0 +1,9 @@
+_target_: learned_qd.nn.learned_fitness_attention.LearnedFitness
+
+num_heads: 4
+num_features: 16
+
+use_proj: true
+use_layer_norm: true
+use_bias_proj: false
+use_bias_attn: true

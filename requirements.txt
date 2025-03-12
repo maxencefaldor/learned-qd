@@ -1,0 +1,17 @@
+numpy<2.0.0
+jax[cuda12]
+flax
+optax
+git+https://github.com/RobertTLange/evosax.git@main#egg=evosax
+git+https://github.com/adaptive-intelligent-robotics/QDax.git@develop#egg=qdax
+scikit-learn
+keras
+brax
+gymnax
+hydra-core
+wandb
+mediapy
+ipykernel
+ipywidgets
+ruff
+mypy

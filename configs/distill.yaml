@@ -1,0 +1,34 @@
+hydra:
+  job:
+    chdir: true
+  run:
+    dir: ./output/distill/${now:%Y-%m-%d_%H%M%S_%f}
+
+defaults:
+  - evo: lqd
+  - evo@teacher: dns
+  - task: meta_bbob
+  - _self_
+  - override evo/population/learned_fitness: transformer
+
+tags: []
+
+seed: 0
+
+num_epochs: 8
+num_tasks: 1024
+num_generations: 1024
+# num_train_samples = num_epochs * num_tasks * num_generations
+
+# Teacher
+teacher:
+  population:
+    max_size: 128
+    k: 1
+
+# Learning
+batch_size: 16
+learning_rate: 0.001
+temperature: 0.5
+
+wandb: true

@@ -1,0 +1,5 @@
+defaults:
+  - population: novelty_population
+  - reproduction: isoline
+
+name: ns

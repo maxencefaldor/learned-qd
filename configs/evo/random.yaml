@@ -1,0 +1,5 @@
+defaults:
+  - population: random_population
+  - reproduction: isoline
+
+name: random
