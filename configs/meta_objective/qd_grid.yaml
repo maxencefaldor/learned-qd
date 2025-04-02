@@ -1,0 +1,8 @@
+_target_: learned_qd.meta.meta_objective_qd.MetaObjective
+
+select_key: ["fitness", "descriptor"]
+objective: qd_grid
+op_task: "median"
+op_norm: "zscore"
+descriptor_size: ${task.descriptor_size}
+population_size: ${evo.population.max_size}

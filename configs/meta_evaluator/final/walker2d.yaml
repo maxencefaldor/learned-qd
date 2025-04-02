@@ -1,0 +1,21 @@
+defaults:
+  - /evo@evo: lqd
+  - /task@task: brax
+  - _self_
+
+num_generations: 4096
+num_evaluations: 32
+
+evo:
+  population:
+    max_size: 128
+  reproduction:
+    batch_size: 8
+
+task:
+  _target_: learned_qd.tasks.brax.BraxTask
+
+  env_name: walker2d
+  descriptor: feet_contact
+
+  episode_length: 250

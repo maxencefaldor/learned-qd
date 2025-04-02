@@ -1,0 +1,4 @@
+_target_: learned_qd.tasks.arm.ArmTask
+
+num_joints: 8
+descriptor: position

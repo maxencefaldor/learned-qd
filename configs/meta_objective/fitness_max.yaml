@@ -1,0 +1,6 @@
+_target_: learned_qd.meta.meta_objective.MetaObjective
+
+select_key: "fitness"
+op_pop: "max"
+op_task: "median"
+op_norm: "zscore"
