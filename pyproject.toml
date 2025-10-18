@@ -1,0 +1,49 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "learned-qd"
+version = "0.1.0"
+dependencies = [
+    "numpy",
+    "jax[cuda]",
+    "flax",
+    "optax",
+    "evosax",
+    "qdax",
+    "scikit-learn",
+    "keras",
+    "brax",
+    "gymnax",
+    "hydra-core",
+    "wandb",
+    "mediapy",
+    "ipykernel",
+    "ipywidgets",
+    "ruff",
+    "mypy"
+]
+requires-python = ">=3.13"
+authors = [{name = "Maxence Faldor", email = "maxencefaldor@gmail.com"}]
+description = "Discovering Quality-Diversity Algorithms via Meta-Black-Box Optimization"
+readme = "README.md"
+license = "MIT"
+keywords = ["Quality-Diversity", "Open-endedness", "Meta-Learning"]
+
+[tool.ruff]
+src = ["src", "tests"]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "SIM", "UP", "W"]
+ignore = [
+	"W191",  # Indentation contains tabs
+    "N801",  # Argument name should be lowercase
+    "N803",  # Argument name should be lowercase
+    "N806",  # Variable in function should be lowercase
+]
+
+[tool.ruff.format]
+indent-style = "tab"

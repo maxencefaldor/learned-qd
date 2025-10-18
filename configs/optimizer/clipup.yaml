@@ -1,0 +1,9 @@
+_target_: learned_qd.es.core.optimizer.clipup
+
+defaults:
+  - /schedule@learning_rate: constant_schedule
+  - _self_
+
+max_velocity: 0.1
+momentum: 0.9
+eps: 1e-8

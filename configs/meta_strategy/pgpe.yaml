@@ -1,0 +1,14 @@
+_target_: learned_qd.es.algorithms.distribution_based.pgpe.PGPE.build
+_partial_: true
+
+defaults:
+  - /optimizer@optimizer: sgd
+  - _self_
+
+population_size: ${meta_population_size}
+
+std_init: 0.04
+std_min: 1e-8
+std_max: 1e8
+std_lr: 0.01
+std_max_change: 0.2

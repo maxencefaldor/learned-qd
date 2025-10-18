@@ -1,0 +1,5 @@
+defaults:
+  - population: dominated_novelty_population
+  - reproduction: isoline
+
+name: dns

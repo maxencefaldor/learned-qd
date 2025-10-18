@@ -1,0 +1,5 @@
+defaults:
+  - population: population
+  - reproduction: isoline
+
+name: ga

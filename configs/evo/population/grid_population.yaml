@@ -1,0 +1,7 @@
+_target_: learned_qd.evo.populations.grid_population.GridPopulation.init
+_partial_: true
+
+max_size: 128
+num_init_cvt_samples: 100_000
+descriptor_min: 0.0
+descriptor_max: 1.0

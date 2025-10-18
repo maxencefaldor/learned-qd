@@ -1,0 +1,59 @@
+_target_: learned_qd.tasks.bbob.BBOBTask
+
+min_num_dims: 2
+max_num_dims: 12
+descriptor: gaussian_random_projection
+descriptor_size: 2
+
+fn_names:
+  # Part 1: Separable functions
+  - sphere
+  - ellipsoidal
+  - rastrigin
+  - bueche_rastrigin
+  - linear_slope
+  # Part 2: Functions with low or moderate conditions
+  - attractive_sector
+  - step_ellipsoidal
+  - rosenbrock
+  - rosenbrock_rotated
+  # Part 3: Functions with high conditioning and unimodal
+  - ellipsoidal_rotated
+  - discus
+  - bent_cigar
+  - sharp_ridge
+  - different_powers
+  # Part 4: Multi-modal functions with adequate global structure
+  - rastrigin_rotated
+  - weierstrass
+  - schaffers_f7
+  - schaffers_f7_ill_conditioned
+  - griewank_rosenbrock
+  # Part 5: Multi-modal functions with weak global structure
+  # - schwefel
+  # - gallagher_101_me
+  # - gallagher_21_hi
+  - katsuura
+  - lunacek
+
+x_range: [-5.0, 5.0]
+x_opt_range: [-4.0, 4.0]
+f_opt_range: [0.0, 0.0]
+clip_x: false
+sample_rotation: true
+
+noise_config:
+  noise_model_names:
+    - noiseless
+    - gaussian
+    - uniform
+    - cauchy
+    # - additive
+  noise_ranges:  # up to moderate
+    gaussian_beta: [0.0, 0.01]
+    uniform_alpha: [0.0, 0.005]
+    uniform_beta: [0.0, 0.01]
+    cauchy_alpha: [0.0, 0.01]
+    cauchy_p: [0.0, 0.05]
+    additive_std: [0.0, 0.01]
+  use_stabilization: false

@@ -1,0 +1,5 @@
+_target_: learned_qd.meta.meta_objective.qd
+_partial_: true
+
+alpha: 0.5
+epsilon: 1e-8

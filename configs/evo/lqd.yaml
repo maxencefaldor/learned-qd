@@ -1,0 +1,7 @@
+defaults:
+  - population: learned_population
+  - reproduction: isoline
+
+name: lqd
+
+run_path: null

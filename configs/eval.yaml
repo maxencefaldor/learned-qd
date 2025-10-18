@@ -1,0 +1,23 @@
+hydra:
+  job:
+    chdir: true
+  run:
+    dir: ./output/eval/${evo.name}/${now:%Y-%m-%d_%H%M%S_%f}
+
+defaults:
+  - evo: lqd
+  - task: bbob
+
+tags: []
+
+seed: 0
+
+num_devices: null
+
+num_generations: 512
+num_evaluations: 32
+
+log_every: 16
+log_evolution: true
+log_fitness_descriptor: false
+wandb: true

@@ -1,0 +1,5 @@
+defaults:
+  - population: grid_population
+  - reproduction: isoline
+
+name: me

@@ -1,0 +1,4 @@
+_target_: learned_qd.meta.meta_objective.fitness_max
+_partial_: true
+
+epsilon: 1e-8

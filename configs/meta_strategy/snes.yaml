@@ -1,0 +1,16 @@
+_target_: learned_qd.es.algorithms.distribution_based.snes.SNES.build
+_partial_: true
+
+defaults:
+  - /optimizer@optimizer: sgd
+  - _self_
+
+optimizer:
+  learning_rate:
+    value: 1.0
+
+population_size: ${meta_population_size}
+
+std_init: 0.04
+std_min: 1e-8
+std_max: 1e8

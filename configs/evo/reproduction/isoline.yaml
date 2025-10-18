@@ -1,0 +1,7 @@
+_target_: learned_qd.evo.reproductions.isoline.get_isoline_emitter
+_partial_: true
+
+batch_size: 32
+
+iso_sigma: 0.005
+line_sigma: 0.05

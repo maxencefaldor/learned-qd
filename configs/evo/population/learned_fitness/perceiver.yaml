@@ -1,0 +1,11 @@
+_target_: learned_qd.nn.learned_fitness_perceiver.LearnedFitness
+
+num_layers: 2
+num_heads: 4
+num_features: 16
+num_ffn_features: 16
+
+use_layer_norm: true
+use_bias_proj: false
+use_bias_attn: true
+use_bias_ffn: true

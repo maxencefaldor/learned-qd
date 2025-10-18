@@ -1,0 +1,24 @@
+_target_: learned_qd.tasks.bbob.BBOBTask
+
+min_num_dims: 10
+max_num_dims: 10
+descriptor: gaussian_random_projection
+descriptor_size: 2
+
+fn_names:
+  - sphere
+
+x_range: [-5.0, 5.0]
+x_opt_range: [-4.0, 4.0]
+f_opt_range: [0.0, 0.0]
+clip_x: false
+sample_rotation: false
+
+noise_config:
+  noise_model_names:
+    - noiseless
+    # - gaussian
+    # - uniform
+    # - cauchy
+    # - additive
+  use_stabilization: false

@@ -1,0 +1,5 @@
+_target_: learned_qd.evo.populations.dominated_novelty_population.DominatedNoveltyPopulation.init
+_partial_: true
+
+max_size: 128
+k: 3

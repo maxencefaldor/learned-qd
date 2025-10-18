@@ -1,0 +1,13 @@
+defaults:
+  - /evo@evo: lqd
+  - /task@task: meta_bbob
+  - _self_
+
+num_generations: 512
+num_evaluations: 1024
+
+evo:
+  population:
+    max_size: 128
+  reproduction:
+    batch_size: 32

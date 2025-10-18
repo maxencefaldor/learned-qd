@@ -1,0 +1,10 @@
+_target_: learned_qd.tasks.brax.BraxTask
+
+env_name: ant
+descriptor: velocity
+
+backend: spring
+episode_length: 1000
+
+layer_sizes: [16]
+activation: tanh

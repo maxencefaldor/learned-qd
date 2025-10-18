@@ -1,0 +1,5 @@
+_target_: learned_qd.evo.populations.novelty_population.NoveltyPopulation.init
+_partial_: true
+
+max_size: 128
+k: 3

@@ -1,0 +1,26 @@
+hydra:
+  job:
+    chdir: true
+  run:
+    dir: ./output/learn/${now:%Y-%m-%d_%H%M%S_%f}
+
+defaults:
+  - evo: lqd
+  - task: meta_bbob
+  - meta_objective_fn: fitness_max
+  - meta_strategy: snes
+
+tags: []
+
+seed: 0
+
+num_devices: null
+
+num_meta_generations: 1024
+meta_population_size: 128
+meta_batch_size: 128
+
+num_generations: 256
+
+log_every: 16
+wandb: true

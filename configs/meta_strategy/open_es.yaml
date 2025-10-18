@@ -1,0 +1,9 @@
+_target_: learned_qd.es.algorithms.distribution_based.open_es.Open_ES.build
+_partial_: true
+
+defaults:
+  - /optimizer@optimizer: sgd
+  - /schedule@std_schedule: constant_schedule
+  - _self_
+
+population_size: ${meta_population_size}

@@ -1,0 +1,18 @@
+defaults:
+  - /evo@evo: lqd
+  - /task@task: arm
+  - _self_
+
+num_generations: 256
+num_evaluations: 32
+
+evo:
+  population:
+    max_size: 128
+  reproduction:
+    batch_size: 32
+
+task:
+  _target_: learned_qd.tasks.arm.ArmTask
+
+  num_joints: 8

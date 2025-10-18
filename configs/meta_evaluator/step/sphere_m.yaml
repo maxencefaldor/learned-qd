@@ -1,0 +1,39 @@
+defaults:
+  - /evo@evo: lqd
+  - /task@task: bbob
+  - _self_
+
+num_generations: 512
+num_evaluations: 32
+
+evo:
+  population:
+    max_size: 128
+  reproduction:
+    batch_size: 32
+
+task:
+  _target_: learned_qd.tasks.bbob.BBOBTask
+
+  min_num_dims: 7
+  max_num_dims: 7
+  descriptor: gaussian_random_projection
+  # descriptor_size: 2
+
+  fn_names:
+    - sphere
+
+  x_range: [-5.0, 5.0]
+  x_opt_range: [0.0, 0.0]
+  f_opt_range: [0.0, 0.0]
+  clip_x: false
+  sample_rotation: false
+
+noise_config:
+  noise_model_names:
+    - noiseless
+    # - gaussian
+    # - uniform
+    # - cauchy
+    # - additive
+  use_stabilization: false
