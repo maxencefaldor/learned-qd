@@ -1,0 +1,5 @@
+defaults:
+  - reproduction: cma_es
+  - population: population
+
+name: cma_es
