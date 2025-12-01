@@ -1,6 +1,5 @@
 """CMA-ES Emitter."""
 
-
 import jax
 from flax import struct
 from qdax.core.emitters.emitter import Emitter, EmitterState
@@ -110,9 +109,9 @@ class CMAESEmitter(Emitter):
 
 
 def get_cma_es_emitter(
-	population_size: int,
+	batch_size: int,
 	minval: float | None = None,
 	maxval: float | None = None,
 ) -> CMAESEmitter:
 	"""Returns a CMAESEmitter."""
-	return CMAESEmitter(population_size=population_size)
+	return CMAESEmitter(population_size=batch_size)

@@ -10,7 +10,9 @@ from learned_qd.utils.plot import evos_colors, evos_dict, run_paths
 matplotlib.rcParams["pdf.fonttype"] = 42
 matplotlib.rcParams["ps.fonttype"] = 42
 
-results_dir = "<path>"
+results_dir = (
+	"/home/maxencefaldor_sakana_ai/projects/learned-qd-private/output/eval_bbo/2025-09-23_215330"
+)
 
 num_evaluations = 1_000_000
 population_size = 128
@@ -61,6 +63,7 @@ fn_names = [
 # Get metrics for all runs
 metrics_list = []
 for evo_dir in os.listdir(results_dir):
+	print(evo_dir)
 	evo_path = os.path.join(results_dir, evo_dir)
 	if not os.path.isdir(evo_path):
 		continue
@@ -178,6 +181,8 @@ ax.plot(
 # Plot points for each evo algorithm
 for _, row in medians.iterrows():
 	evo = row["evo"]
+	if evo == "cma_es":
+		continue
 	color = evos_colors["lqd"] if evo.startswith("lqd") else evos_colors[evo]
 	ax.scatter(
 		row["fitness_max"], row["novelty_mean"], label=evos_dict[evo], color=color, s=100, zorder=2
@@ -192,17 +197,41 @@ label_offsets = {
 	"dns": (5, 5),
 	"ga": (5, 5),
 	"ns": (5, 5),
+	"cma_es": (5, 5),
 }
 
 # Add labels for each point
 for _, row in medians.iterrows():
 	evo = row["evo"]
+	if evo == "cma_es":
+		continue
 	offset = label_offsets.get(evo, (5, 5))  # Default offset if not specified
 	ax.annotate(
 		evos_dict[row["evo"]],
 		(row["fitness_max"], row["novelty_mean"]),
 		xytext=offset,
 		textcoords="offset points",
+	)
+
+# Plot vertical line for CMA-ES
+if "cma_es" in medians.evo.values:
+	cma_fitness = medians[medians.evo == "cma_es"].iloc[0]["fitness_max"]
+	ax.axvline(
+		x=cma_fitness,
+		color=evos_colors["cma_es"],
+		linestyle="--",
+		label=evos_dict["cma_es"],
+		zorder=1,
+	)
+	# Add label for CMA-ES next to the line
+	ax.text(
+		cma_fitness,
+		0.5,  # 50% from the bottom of the axis
+		" CMA-ES",
+		color=evos_colors["cma_es"],
+		verticalalignment="center",
+		horizontalalignment="left",
+		transform=ax.get_xaxis_transform(),
 	)
 
 # Set log scale for both axes

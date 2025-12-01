@@ -4,6 +4,7 @@ import subprocess
 from learned_qd.utils.plot import run_paths
 
 evos = ["random", "ga", "ns", "me", "dns", "lqd_q", "lqd_d", "lqd_qd"]
+evos = ["cma_es"]
 population_size = 128
 
 num_dims = 16

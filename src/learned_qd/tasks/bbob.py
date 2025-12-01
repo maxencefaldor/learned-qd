@@ -51,7 +51,7 @@ class BBOBTask(Task):
 		clip_x: bool = False,
 		sample_rotation: bool = False,
 		noise_config: dict = {
-			"noise_models": ["noiseless", "gaussian", "uniform", "cauchy", "additive"],
+			"noise_model_names": ["noiseless", "gaussian", "uniform", "cauchy", "additive"],
 			"use_stabilization": True,
 		},
 	):

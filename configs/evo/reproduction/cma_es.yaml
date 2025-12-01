@@ -1,4 +1,4 @@
 _target_: learned_qd.evo.reproductions.cma_es_emitter.get_cma_es_emitter
 _partial_: true
 
-population_size: 128
+batch_size: 32

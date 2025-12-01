@@ -13,14 +13,15 @@ evos_dict = {
 	"dns": "DNS",
 	"ga": "GA",
 	"ns": "NS",
+	"cma_es": "CMA-ES",
 	"random": "Random",
 }
 
 # Replace with actual run IDs
 run_paths = {
-	"lqd_q": "<entity_id>/Learned-QD/<run_id>",
-	"lqd_d": "<entity_id>/Learned-QD/<run_id>",
-	"lqd_qd": "<entity_id>/Learned-QD/<run_id>",
+	"lqd_q": "meta-synth-env/Learned-QD/payvld97",
+	"lqd_d": "meta-synth-env/Learned-QD/jrtm98xf",
+	"lqd_qd": "meta-synth-env/Learned-QD/9ycq2u3q",
 }
 
 metrics_dict = {
@@ -30,7 +31,9 @@ metrics_dict = {
 }
 
 # Get a colorblind-friendly palette for the number of algorithms
-palette = sns.color_palette("colorblind", n_colors=len(["lqd", "me", "dns", "ga", "ns", "random"]))
+palette = sns.color_palette(
+	"colorblind", n_colors=len(["lqd", "me", "dns", "ga", "ns", "cma_es", "random"])
+)
 
 # Create dictionary mapping algorithm names to colors
 evos_colors = {
@@ -42,6 +45,7 @@ evos_colors = {
 	"dns": palette[2],
 	"ga": palette[3],
 	"ns": palette[4],
+	"cma_es": palette[6],
 	"random": palette[5],
 }
 

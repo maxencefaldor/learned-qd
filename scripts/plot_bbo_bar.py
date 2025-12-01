@@ -16,7 +16,9 @@ from learned_qd.utils.plot import (
 matplotlib.rcParams["pdf.fonttype"] = 42
 matplotlib.rcParams["ps.fonttype"] = 42
 
-results_dir = "<path>"
+results_dir = (
+	"/home/maxencefaldor_sakana_ai/projects/learned-qd-private/output/eval_bbo/2025-09-23_215330"
+)
 
 num_evaluations = 8192 * 32
 population_size = 128
