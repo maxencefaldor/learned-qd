@@ -6,9 +6,6 @@ from typing import Any
 import flax.struct
 import jax
 import jax.numpy as jnp
-from evosax.algorithms.base import EvolutionaryAlgorithm
-from evosax.algorithms.base import Params as BaseParams
-from evosax.algorithms.base import State as BaseState
 from numpy.random import RandomState
 from sklearn.cluster import KMeans
 
@@ -21,8 +18,6 @@ type Centroid = jax.Array
 
 
 # --- Metrics ---
-
-
 def novelty_and_dominated_novelty(fitness, descriptor, novelty_k=3, dominated_novelty_k=3):
 	valid = fitness != -jnp.inf
 
@@ -59,8 +54,8 @@ def metrics_fn(
 	population: Genotype,
 	fitness: Fitness,
 	descriptor: Descriptor,
-	state: BaseState,
-	params: BaseParams,
+	state: "QDState",
+	params: "QDParams",
 ) -> dict:
 	"""Compute QD metrics."""
 	k = 3
@@ -114,8 +109,6 @@ def metrics_agg_fn(metrics: dict) -> dict:
 
 
 # --- Grid Helpers ---
-
-
 def get_centroid_indices(descriptors: Descriptor, centroids: Centroid) -> jax.Array:
 	"""Assign descriptors to their closest centroid and return the indices of the centroids."""
 
@@ -175,10 +168,8 @@ def segment_argmax(data, segment_ids, num_segments):
 
 
 # --- Base Algorithm ---
-
-
 @flax.struct.dataclass
-class QDState(BaseState):
+class QDState:
 	population: Genotype
 	fitness: Fitness
 	descriptor: Descriptor
@@ -189,11 +180,31 @@ class QDState(BaseState):
 
 
 @flax.struct.dataclass
-class QDParams(BaseParams):
+class QDParams:
 	mutation_sigma: float = 0.1
 
 
 # --- Fitness Shaping Functions ---
+def update_best_solution_and_fitness(
+	population, fitness, best_solution_so_far, best_fitness_so_far
+):
+	"""Update best solution and fitness so far."""
+	idx = jnp.argmax(fitness)
+	best_solution_in_population = jax.tree.map(lambda x: x[idx], population)
+	best_fitness_in_population = fitness[idx]
+
+	condition = best_fitness_in_population < best_fitness_so_far
+	best_solution_so_far = jax.tree.map(
+		lambda n, o: jnp.where(condition, o, n),
+		best_solution_in_population,
+		best_solution_so_far,
+	)
+	best_fitness_so_far = jnp.where(
+		condition,
+		best_fitness_so_far,
+		best_fitness_in_population,
+	)
+	return best_solution_so_far, best_fitness_so_far
 
 
 def random_fitness_shaping(
@@ -226,9 +237,9 @@ def novelty_fitness_shaping(
 	descriptor: Descriptor,
 	state: QDState,
 	params: QDParams,
+	novelty_k: int = 3,
 ) -> Fitness:
 	"""Novelty Search: use novelty score."""
-	novelty_k = getattr(params, "novelty_k", 3)
 	novelty, _ = novelty_and_dominated_novelty(
 		fitness,
 		descriptor,
@@ -244,9 +255,9 @@ def dominated_novelty_fitness_shaping(
 	descriptor: Descriptor,
 	state: QDState,
 	params: QDParams,
+	novelty_k: int = 3,
 ) -> Fitness:
 	"""Dominated Novelty Search: use dominated novelty score."""
-	novelty_k = getattr(params, "novelty_k", 3)
 	_, dominated_novelty = novelty_and_dominated_novelty(
 		fitness,
 		descriptor,
@@ -291,19 +302,41 @@ def gaussian_mutation(key: RNGKey, genotype: Genotype, sigma: float) -> Genotype
 	return jax.tree.map(lambda x: x + sigma * jax.random.normal(key, x.shape), genotype)
 
 
-class QDAlgorithm(EvolutionaryAlgorithm):
+class QDAlgorithm:
 	def __init__(
 		self,
 		population_size: int,
 		solution: Genotype,
 		fitness_shaping_fn=identity_fitness_shaping,
 	):
-		super().__init__(
-			population_size=population_size,
-			solution=solution,
-			fitness_shaping_fn=fitness_shaping_fn,
-			metrics_fn=metrics_fn,
-		)
+		self.population_size = population_size
+		self.solution = solution
+		self.fitness_shaping_fn = fitness_shaping_fn
+		self.metrics_fn = metrics_fn
+
+	@partial(jax.jit, static_argnames=("self",))
+	def init(
+		self,
+		key: jax.Array,
+		population: Genotype,
+		fitness: Fitness,
+		descriptor: Descriptor,
+		params: QDParams,
+	) -> QDState:
+		"""Initialize evolutionary algorithm."""
+		state = self._init(key, params)
+		state, _ = self.tell(key, population, fitness, descriptor, state, params)
+		return state
+
+	@partial(jax.jit, static_argnames=("self",))
+	def ask(
+		self,
+		key: jax.Array,
+		state: QDState,
+		params: QDParams,
+	) -> tuple[Genotype, QDState]:
+		"""Ask evolutionary algorithm for new candidate solutions."""
+		return self._ask(key, state, params)
 
 	@property
 	def default_params(self) -> QDParams:
@@ -319,15 +352,10 @@ class QDAlgorithm(EvolutionaryAlgorithm):
 		params: QDParams,
 	) -> tuple[QDState, dict]:
 		"""Tell evolutionary algorithm fitness and descriptors for state update."""
-		# Update best solution and fitness (global best)
-		population_flat = jax.vmap(self._ravel_solution)(population)
-
-		idx = jnp.argmax(fitness)
-		best_sol = population_flat[idx]
-		best_fit = fitness[idx]
-
-		best_solution = jnp.where(best_fit > state.best_fitness, best_sol, state.best_solution)
-		best_fitness = jnp.maximum(best_fit, state.best_fitness)
+		# Update best solution and fitness
+		best_solution, best_fitness = update_best_solution_and_fitness(
+			population, fitness, state.best_solution, state.best_fitness
+		)
 
 		state = state.replace(
 			best_solution=best_solution,
@@ -383,39 +411,28 @@ class QDAlgorithm(EvolutionaryAlgorithm):
 
 		return state, metrics
 
+	def _init(self, key: RNGKey, params: QDParams) -> QDState:
+		raise NotImplementedError
+
 	def _ask(self, key: RNGKey, state: QDState, params: QDParams) -> tuple[Genotype, QDState]:
 		"""Common ask method for QD algorithms."""
 		# Simple Selection -> Mutation
 		valid = state.fitness != -jnp.inf
-		is_first_gen = jnp.all(state.fitness == -jnp.inf)
 
-		def sample_random(k):
-			return jax.tree.map(
-				lambda x: jax.random.normal(k, (self.population_size,) + x.shape), self.solution
-			)
+		p = valid / jnp.sum(valid)
+		p = jnp.where(jnp.isnan(p), 1.0 / self.population_size, p)
 
-		def sample_parents(k):
-			# Select proportional to validity (uniform among valid)
-			# If we wanted fitness proportional, we'd need to normalize fitness first.
-			# Here we just pick uniformly from valid individuals in the archive/population.
-			p = valid / jnp.sum(valid)
-			p = jnp.where(jnp.isnan(p), 1.0 / self.population_size, p)
-			return jax.tree.map(
-				lambda x: jax.random.choice(k, x, shape=(self.population_size,), p=p),
-				state.population,
-			)
+		population = jax.tree.map(
+			lambda x: jax.random.choice(key, x, shape=(self.population_size,), p=p),
+			state.population,
+		)
 
-		population = jax.lax.cond(is_first_gen, sample_random, sample_parents, key)
-
-		key_mut, _ = jax.random.split(key)
-		population = gaussian_mutation(key_mut, population, params.mutation_sigma)
+		population = gaussian_mutation(key, population, params.mutation_sigma)
 
 		return population, state
 
 
 # --- Algorithms ---
-
-
 class GeneticAlgorithm(QDAlgorithm):
 	def __init__(
 		self,
@@ -432,20 +449,21 @@ class GeneticAlgorithm(QDAlgorithm):
 		self.descriptor_size = descriptor_size
 
 	def _init(self, key: RNGKey, params: QDParams) -> QDState:
-		# Initial population is empty/nan
 		genotype = jax.tree.map(
 			lambda x: jnp.full((self.population_size,) + x.shape, fill_value=jnp.nan),
 			self.solution,
 		)
 		fitness = jnp.full((self.population_size,), fill_value=-jnp.inf)
-		descriptor_size = getattr(self, "descriptor_size", 2)
-		descriptor = jnp.full((self.population_size, descriptor_size), fill_value=jnp.nan)
+		descriptor = jnp.full((self.population_size, self.descriptor_size), fill_value=jnp.nan)
+
+		# Initialize best_solution structure matching solution template
+		best_solution = jax.tree.map(lambda x: jnp.full(x.shape, jnp.nan), self.solution)
 
 		state = QDState(
 			population=genotype,
 			fitness=fitness,
 			descriptor=descriptor,
-			best_solution=jnp.full((self.num_dims,), jnp.nan),
+			best_solution=best_solution,
 			best_fitness=-jnp.inf,
 			generation_counter=0,
 		)
@@ -453,47 +471,38 @@ class GeneticAlgorithm(QDAlgorithm):
 
 
 class NoveltySearch(GeneticAlgorithm):
-	@flax.struct.dataclass
-	class Params(QDParams):
-		novelty_k: int = 3
-
-	@property
-	def default_params(self) -> Params:
-		return NoveltySearch.Params()
-
-	def __init__(self, population_size: int, solution: Genotype, **kwargs):
+	def __init__(
+		self, population_size: int, solution: Genotype, novelty_k: int = 3, descriptor_size: int = 2
+	):
 		super().__init__(
-			population_size, solution, fitness_shaping_fn=novelty_fitness_shaping, **kwargs
+			population_size,
+			solution,
+			fitness_shaping_fn=partial(novelty_fitness_shaping, novelty_k=novelty_k),
+			descriptor_size=descriptor_size,
 		)
 
 
 class DominatedNoveltySearch(GeneticAlgorithm):
-	@flax.struct.dataclass
-	class Params(QDParams):
-		novelty_k: int = 3
-
-	@property
-	def default_params(self) -> Params:
-		return DominatedNoveltySearch.Params()
-
-	def __init__(self, population_size: int, solution: Genotype, **kwargs):
+	def __init__(
+		self, population_size: int, solution: Genotype, novelty_k: int = 3, descriptor_size: int = 2
+	):
 		super().__init__(
 			population_size,
 			solution,
-			fitness_shaping_fn=dominated_novelty_fitness_shaping,
-			**kwargs,
+			fitness_shaping_fn=partial(dominated_novelty_fitness_shaping, novelty_k=novelty_k),
+			descriptor_size=descriptor_size,
 		)
 
 
 class RandomSearch(GeneticAlgorithm):
 	"""Random Search: replaces individuals randomly."""
 
-	def __init__(self, population_size: int, solution: Genotype, **kwargs):
+	def __init__(self, population_size: int, solution: Genotype, descriptor_size: int = 2):
 		super().__init__(
 			population_size,
 			solution,
 			fitness_shaping_fn=random_fitness_shaping,
-			**kwargs,
+			descriptor_size=descriptor_size,
 		)
 
 
@@ -511,15 +520,12 @@ class MAPElites(QDAlgorithm):
 		descriptor_min: float | list[float],
 		descriptor_max: float | list[float],
 		num_init_cvt_samples: int = 10000,
-		**kwargs,
 	):
 		self.descriptor_size = descriptor_size
 		self.descriptor_min = descriptor_min
 		self.descriptor_max = descriptor_max
 		self.num_init_cvt_samples = num_init_cvt_samples
-		super().__init__(
-			population_size, solution, fitness_shaping_fn=map_elites_fitness_shaping, **kwargs
-		)
+		super().__init__(population_size, solution, fitness_shaping_fn=map_elites_fitness_shaping)
 
 	def _init(self, key: RNGKey, params: QDParams) -> MAPElitesState:
 		genotype = jax.tree.map(
@@ -538,12 +544,15 @@ class MAPElites(QDAlgorithm):
 			key=key,
 		)
 
+		# Initialize best_solution structure matching solution template
+		best_solution = jax.tree.map(lambda x: jnp.full(x.shape, jnp.nan), self.solution)
+
 		state = MAPElitesState(
 			population=genotype,
 			fitness=fitness,
 			descriptor=descriptor,
 			centroids=centroids,
-			best_solution=jnp.full((self.num_dims,), jnp.nan),
+			best_solution=best_solution,
 			best_fitness=-jnp.inf,
 			generation_counter=0,
 		)
@@ -569,13 +578,20 @@ if __name__ == "__main__":
 	)
 
 	key = jax.random.key(seed)
-	key_task, key_init, key_algo = jax.random.split(key, 3)
+	key_task, key_init, key_algo, key_pop = jax.random.split(key, 4)
 
 	task_params = task.sample(key_task)
 	task_state = task.init(key_init, task_params)
 
 	# Solution template
 	solution_template = jnp.zeros((dim,))
+
+	# Sample initial population from task
+	keys = jax.random.split(key_pop, pop_size)
+	initial_population = jax.vmap(task.sample_x)(keys)
+
+	# Evaluate initial population to get fitness/descriptor for init
+	task_state, task_eval = task.evaluate(key_pop, initial_population, task_state, task_params)
 
 	# Algorithms to test
 	algorithms = {
@@ -599,7 +615,15 @@ if __name__ == "__main__":
 
 		# Init Algorithm
 		params = algo.default_params
-		state = algo.init(key_algo, params)
+
+		# Initialize with the sampled population
+		state = algo.init(
+			key_algo,
+			population=initial_population,
+			fitness=task_eval.fitness,
+			descriptor=task_eval.descriptor,
+			params=params,
+		)
 
 		# Loop
 		curr_task_state = task_state
