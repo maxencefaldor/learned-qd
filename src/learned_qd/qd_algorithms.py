@@ -173,38 +173,13 @@ class QDState:
 	population: Genotype
 	fitness: Fitness
 	descriptor: Descriptor
-	# Best solution found so far (global)
-	best_solution: Genotype
-	best_fitness: Fitness
+
 	generation_counter: int
 
 
 @flax.struct.dataclass
 class QDParams:
 	mutation_sigma: float = 0.1
-
-
-# --- Fitness Shaping Functions ---
-def update_best_solution_and_fitness(
-	population, fitness, best_solution_so_far, best_fitness_so_far
-):
-	"""Update best solution and fitness so far."""
-	idx = jnp.argmax(fitness)
-	best_solution_in_population = jax.tree.map(lambda x: x[idx], population)
-	best_fitness_in_population = fitness[idx]
-
-	condition = best_fitness_in_population < best_fitness_so_far
-	best_solution_so_far = jax.tree.map(
-		lambda n, o: jnp.where(condition, o, n),
-		best_solution_in_population,
-		best_solution_so_far,
-	)
-	best_fitness_so_far = jnp.where(
-		condition,
-		best_fitness_so_far,
-		best_fitness_in_population,
-	)
-	return best_solution_so_far, best_fitness_so_far
 
 
 def random_fitness_shaping(
@@ -214,7 +189,7 @@ def random_fitness_shaping(
 	state: QDState,
 	params: QDParams,
 ) -> Fitness:
-	"""Random Search: assign random fitness to valid individuals."""
+	"""Random Fitness."""
 	random_fitness = jax.random.uniform(key, fitness.shape)
 	valid = fitness != -jnp.inf
 	return jnp.where(valid, random_fitness, -jnp.inf)
@@ -227,7 +202,7 @@ def identity_fitness_shaping(
 	state: QDState,
 	params: QDParams,
 ) -> Fitness:
-	"""Standard GA: use raw fitness."""
+	"""Raw Fitness."""
 	return fitness
 
 
@@ -239,7 +214,7 @@ def novelty_fitness_shaping(
 	params: QDParams,
 	novelty_k: int = 3,
 ) -> Fitness:
-	"""Novelty Search: use novelty score."""
+	"""Novelty Score."""
 	novelty, _ = novelty_and_dominated_novelty(
 		fitness,
 		descriptor,
@@ -257,7 +232,7 @@ def dominated_novelty_fitness_shaping(
 	params: QDParams,
 	novelty_k: int = 3,
 ) -> Fitness:
-	"""Dominated Novelty Search: use dominated novelty score."""
+	"""Dominated Novelty Score."""
 	_, dominated_novelty = novelty_and_dominated_novelty(
 		fitness,
 		descriptor,
@@ -274,7 +249,7 @@ def map_elites_fitness_shaping(
 	state: QDState,
 	params: QDParams,
 ) -> Fitness:
-	"""MAP-Elites: use fitness if best in cell, else -inf."""
+	"""Grid Fitness."""
 	centroids = state.centroids
 
 	# Get centroid assignments
@@ -351,17 +326,7 @@ class QDAlgorithm:
 		state: QDState,
 		params: QDParams,
 	) -> tuple[QDState, dict]:
-		"""Tell evolutionary algorithm fitness and descriptors for state update."""
-		# Update best solution and fitness
-		best_solution, best_fitness = update_best_solution_and_fitness(
-			population, fitness, state.best_solution, state.best_fitness
-		)
-
-		state = state.replace(
-			best_solution=best_solution,
-			best_fitness=best_fitness,
-		)
-
+		"""Tell Fitness and Descriptors."""
 		# Concatenate
 		all_genotype = jax.tree.map(
 			lambda x, y: jnp.concatenate([x, y], axis=0),
@@ -407,7 +372,6 @@ class QDAlgorithm:
 			key_metrics, state.population, state.fitness, state.descriptor, state, params
 		)
 		metrics["generation"] = state.generation_counter
-		metrics["best_fitness"] = state.best_fitness
 
 		return state, metrics
 
@@ -456,15 +420,10 @@ class GeneticAlgorithm(QDAlgorithm):
 		fitness = jnp.full((self.population_size,), fill_value=-jnp.inf)
 		descriptor = jnp.full((self.population_size, self.descriptor_size), fill_value=jnp.nan)
 
-		# Initialize best_solution structure matching solution template
-		best_solution = jax.tree.map(lambda x: jnp.full(x.shape, jnp.nan), self.solution)
-
 		state = QDState(
 			population=genotype,
 			fitness=fitness,
 			descriptor=descriptor,
-			best_solution=best_solution,
-			best_fitness=-jnp.inf,
 			generation_counter=0,
 		)
 		return state
@@ -544,16 +503,11 @@ class MAPElites(QDAlgorithm):
 			key=key,
 		)
 
-		# Initialize best_solution structure matching solution template
-		best_solution = jax.tree.map(lambda x: jnp.full(x.shape, jnp.nan), self.solution)
-
 		state = MAPElitesState(
 			population=genotype,
 			fitness=fitness,
 			descriptor=descriptor,
 			centroids=centroids,
-			best_solution=best_solution,
-			best_fitness=-jnp.inf,
 			generation_counter=0,
 		)
 		return state
@@ -626,8 +580,6 @@ if __name__ == "__main__":
 		)
 
 		# Loop
-		curr_task_state = task_state
-
 		for gen in range(num_generations):
 			key_algo, key_ask, key_eval, key_tell = jax.random.split(key_algo, 4)
 
@@ -635,8 +587,8 @@ if __name__ == "__main__":
 			population, state = algo.ask(key_ask, state, params)
 
 			# Evaluate
-			curr_task_state, task_eval = task.evaluate(
-				key_eval, population, curr_task_state, task_params
+			task_state, task_eval = task.evaluate(
+				key_eval, population, task_state, task_params
 			)
 
 			# Tell
@@ -654,5 +606,3 @@ if __name__ == "__main__":
 					f"novelty_mean={agg['novelty_mean']:.4f}, "
 					f"dominated_novelty_mean={agg['dominated_novelty_mean']:.4f}"
 				)
-
-		print(f"Final Best Fitness: {state.best_fitness:.4f}")
